@@ -1,10 +1,10 @@
 import numpy as np
 import os
 from pathlib import Path
-
+ 
 #DATASET_LOCATION = "/home/amey/code/paper_name_not_decided/nd_all"
 DATASET_LOCATION = os.getcwd()
-
+ 
 
 def path_all_files_in_given_dir(path):
     """
