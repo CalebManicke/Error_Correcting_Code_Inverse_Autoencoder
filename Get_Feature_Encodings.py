@@ -137,5 +137,32 @@ def Return_ldpc_Embeddings(encoding_dir):
     encoding_loader = datamanager.TensorToDataLoader(xData = hw_encodings_torch, yData = w_encodings_torch, batchSize = 64)
     return encoding_loader
 
+
+def Return_Big_ldpc_Embeddings(batch_size):
+    # 900k encodings come in three batches of around 300k each
+    encoding_dir_1 = os.getcwd() + '/ldpc_embeddings_3/ldpc_embeddings1.txt'
+    encoding_dir_2 = os.getcwd() + '/ldpc_embeddings_3/ldpc_embeddings2.txt'
+    encoding_dir_3 = os.getcwd() + '/ldpc_embeddings_3/ldpc_embeddings3.txt'
+
+    # Load encodings from data loader
+    encoding_loader_1 = Return_ldpc_Embeddings(encoding_dir_1)
+    encoding_loader_2 = Return_ldpc_Embeddings(encoding_dir_2)
+    encoding_loader_3 = Return_ldpc_Embeddings(encoding_dir_3)
+
+    # Get (w, Hw) pairs, concatenate tensors
+    w_1, hw_1 = datamanager.DataLoaderToTensor(encoding_loader_1)
+    w_2, hw_2 = datamanager.DataLoaderToTensor(encoding_loader_2)
+    w_3, hw_3 = datamanager.DataLoaderToTensor(encoding_loader_3)
+
+    all_w = torch.cat((w_1, w_2, w_3), 0)
+    all_hw = torch.cat((hw_1, hw_2, hw_3), 0)
+    #print(all_w.size())
+    #print(all_hw.size())
+
+    # Return concatenated loader
+    full_encoding_loader = datamanager.TensorToDataLoader(xData = all_w, yData = all_hw, batchSize = batch_size)
+    return full_encoding_loader
+
+
 if __name__ == '__main__':
     Return_ldpc_Embeddings(os.getcwd() + '//ldpc_embeddings.txt')

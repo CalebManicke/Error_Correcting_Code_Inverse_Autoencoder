@@ -19,7 +19,7 @@ import os
 from PIL import Image
 from random import shuffle
 
-from Get_Feature_Encodings import ReturnFeatureEmbeddings, CreateIdentityFeatureEmbeddings, CreateRandomConcatenatedFeatureEmbeddings, Return_ldpc_Embeddings
+from Get_Feature_Encodings import ReturnFeatureEmbeddings, CreateIdentityFeatureEmbeddings, CreateRandomConcatenatedFeatureEmbeddings, Return_ldpc_Embeddings, Return_Big_ldpc_Embeddings
 from Inverse_Encoding_Model import Linear_Hw_To_w_Model, One_Conv_Inverse_Hw_To_w_Model, Conv_Inverse_Hw_To_w_Autoencoder, Inverse_Hw_To_w_DenseNet
 
 # Train network
@@ -117,6 +117,7 @@ def main(train_dict, encoding_dir):
     
     # If dataloaders haven't been created yet, call ReturnVoterLabDataLoaders
     if 'ldpc' in train_dict['modelName']: encoding_loader = Return_ldpc_Embeddings(encoding_dir)
+    if 'Big_ldpc' in train_dict['modelName']: encoding_loader = Return_Big_ldpc_Embeddings(train_dict['batchSize'])
     if 'Identity' in train_dict['modelName']: encoding_loader = CreateIdentityFeatureEmbeddings(encoding_dir)
     if 'Concat' in train_dict['modelName']: encoding_loader = CreateRandomConcatenatedFeatureEmbeddings(encoding_dir)
     if 'Random_Mult' in train_dict['modelName']: encoding_loader = ReturnFeatureEmbeddings(encoding_dir)
@@ -138,9 +139,16 @@ def main(train_dict, encoding_dir):
 
     # Load pretrained weights if specified
     if not (train_dict['usePretrained'] is None):
-        checkpointLocation = train_dict['usePretrained']
-        checkpoint = torch.load(checkpointLocation, map_location = torch.device("cpu"))
-        model.load_state_dict(checkpoint['state_dict'])
+        with torch.no_grad():
+            checkpointLocation = train_dict['usePretrained']
+            checkpoint = torch.load(checkpointLocation, map_location = torch.device("cpu"))
+            model.load_state_dict(checkpoint['state_dict'])
+
+        if 'ldpc' in train_dict['modelName']:
+            big_encoding_loader = Return_Big_ldpc_Embeddings(train_dict['batchSize'])
+            valAcc = datamanager.validateReturn(model.to(device), big_encoding_loader, device)
+            print("------------------------------------")
+            print("Total Pre-Trained Accuracy: ", valAcc)
 
     # Train model
     criterion = nn.MSELoss()
@@ -170,8 +178,8 @@ if __name__ == '__main__':
 
     # Working configuration: {'modelName': 'Identity_DenseNet', 'learningRate': 0.00001, 'weightDecay': 0, 'numEpochs': 200, 'lrScheduler': [], 'continueTraining': False, 'batchSize': 4}, model droupout_rate = 1.0, no learning rate scheduler!
     Random_Linear_Hw_To_w_Model = dict()
-    pretrained_dir = None
-    if trainLDPC: Random_Linear_Hw_To_w_Model = {'modelName': 'Synthetic_ldpc_DenseNet', 'modelType': 'DenseNet', 'dropoutRate': 1, 'learningRate': 0.00001, 'weightDecay': 0, 'numEpochs': 200, 'lrScheduler': [], 'continueTraining': False, 'batchSize': 32, 'usePretrained': pretrained_dir}
+    pretrained_dir = os.getcwd() + '//Trained_Hw_To_w_Models//Big_ldpc_DenseNet.th'
+    if trainLDPC: Random_Linear_Hw_To_w_Model = {'modelName': 'ldpc_DenseNet', 'modelType': 'DenseNet', 'dropoutRate': 1, 'learningRate': 0.00001, 'weightDecay': 0, 'numEpochs': 200, 'lrScheduler': [], 'continueTraining': False, 'batchSize': 32, 'usePretrained': pretrained_dir}
     else:         Random_Linear_Hw_To_w_Model = {'modelName': 'Identity_DenseNet', 'modelType': 'DenseNet', 'dropoutRate': 1, 'learningRate': 0.0001, 'weightDecay': 0, 'numEpochs': 200, 'lrScheduler': [], 'continueTraining': False, 'batchSize': 64, 'usePretrained': pretrained_dir}
 
     # Linear model: learning rate = 1e-5, batch size = 16, weight decay = 0

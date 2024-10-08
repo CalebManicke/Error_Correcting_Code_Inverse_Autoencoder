@@ -131,6 +131,8 @@ def validateReturn(model, loader, device):
             '''
             #print(torch.max(binary_output))
             binary_output = binary_output.to(device)
+            #print(binary_output.size())
+            #print(target.size())
             # Compute Hamming distance 
             '''
             for encoding_index in range(0, output.shape[0]):

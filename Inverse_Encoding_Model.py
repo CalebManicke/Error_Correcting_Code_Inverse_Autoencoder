@@ -365,4 +365,5 @@ class _Inverse_Hw_To_w_DenseNet(nn.Module):
     
 # Return Denoising DenseNet
 def Inverse_Hw_To_w_DenseNet (dropout_rate, out_features): 
-    return _Inverse_Hw_To_w_DenseNet(growth_rate = 32, block_config =  (6, 12, 24, 16), input_channel = 1, final_dropout_rate = dropout_rate, num_init_features = 64, out_features = out_features)
+    # Standard 128 Architecture: (6, 12, 24, 16)
+    return _Inverse_Hw_To_w_DenseNet(growth_rate = 32, block_config =  (6, 10, 6), input_channel = 1, final_dropout_rate = dropout_rate, num_init_features = 64, out_features = out_features)
